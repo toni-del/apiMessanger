@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int       @id @default(autoincrement())
+  first_name  String
+  last_name   String
+  email       String     @unique
+  nickname    String     @unique
+  password    String
+  avatar      String?    // URL аватара, может быть null
+  bio         String?    // Описание профиля, может быть null
+  created_at  DateTime   @default(now())
+  updated_at  DateTime   @updatedAt
+  dialogs     Dialog[]   @relation("DialogCreator")
+  messages    Message[]  @relation("UserMessages")
+  participants DialogParticipant[]
+}
+
+model Dialog {
+  id          Int                 @id @default(autoincrement())
+  created_by  User                @relation("DialogCreator", fields: [created_by_id], references: [id])
+  created_by_id Int
+  created_at  DateTime            @default(now())
+  messages    Message[]           @relation("DialogMessages")
+  participants DialogParticipant[]
+}
+
+model DialogParticipant {
+  id          Int     @id @default(autoincrement())
+  dialog      Dialog  @relation(fields: [dialog_id], references: [id])
+  dialog_id   Int
+  user        User    @relation(fields: [user_id], references: [id])
+  user_id     Int
+  joined_at   DateTime @default(now())
+}
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  dialog      Dialog    @relation("DialogMessages", fields: [dialog_id], references: [id])
+  dialog_id   Int
+  sender      User      @relation("UserMessages", fields: [sender_id], references: [id])
+  sender_id   Int
+  message_text String
+  sent_at     DateTime  @default(now())
+}
