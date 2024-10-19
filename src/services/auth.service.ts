@@ -11,6 +11,10 @@ export class AuthService {
     ) {}
 
     async registerUser(first_name: string, last_name: string, email: string, nickname: string, password: string) {
+        if (! await this.isUniqueData(email, nickname)) {
+            throw new BadRequestException("user with this email or nickname already exist")
+        }
+        
         const newUser: NonValidatedUser = {
             first_name,
             last_name,
@@ -45,18 +49,29 @@ export class AuthService {
             throw new BadRequestException(validationErrors.join(", "))
         }
 
-        const passwordHash: string = await this.hashPassword(password)
-
-        return this.prismaService.user.findFirst({
+        const notAuthUser = await this.prismaService.user.findFirst({
             where: {
-                email,
-                password: passwordHash
+                email
             }
         })
+
+        if (notAuthUser === null) {
+            throw new BadRequestException("uncorrect email")
+        }
+
+        if (await this.verifyPassword(notAuthUser.password, password)) {
+            return notAuthUser
+        } else {
+            throw new BadRequestException("uncorrect password")
+        }
     }
 
     private async hashPassword(plainPassword: string) : Promise<string> {
         return await argon2.hash(plainPassword)
+    }
+
+    private async verifyPassword(hashedPass: string, plainPass: string): Promise<boolean> {
+        return await argon2.verify(hashedPass, plainPass)
     }
 
     private validateUser(user: NonValidatedUser): string[] {
@@ -103,5 +118,16 @@ export class AuthService {
         }
 
         return errors
+    }
+
+    private async isUniqueData(email: string, nickname: string) {
+        const user = await this.prismaService.user.findFirst({
+            where: {
+                OR: [
+                    {email}, {nickname}
+                ]
+            }
+        })
+        return user === null
     }
 }
