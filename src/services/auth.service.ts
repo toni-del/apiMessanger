@@ -3,14 +3,16 @@ import { Prisma, User } from "@prisma/client";
 import * as argon2 from 'argon2'
 import { NonValidatedUser } from "src/types/NotValidatedUser";
 import { PrismaService } from "./prisma.service";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly prismaService: PrismaService
+        private readonly prismaService: PrismaService,
+        private readonly jwtService: JwtService
     ) {}
 
-    async registerUser(first_name: string, last_name: string, email: string, nickname: string, password: string) {
+    async registerUser(first_name: string, last_name: string, email: string, nickname: string, password: string): Promise<{accesToken: string}> {
         if (! await this.isUniqueData(email, nickname)) {
             throw new BadRequestException("user with this email or nickname already exist")
         }
@@ -31,7 +33,7 @@ export class AuthService {
 
         const passwordHash: string = await this.hashPassword(password)
 
-        return this.prismaService.user.create({
+        const registredUser = await this.prismaService.user.create({
             data: {
                 first_name,
                 last_name,
@@ -40,9 +42,15 @@ export class AuthService {
                 password: passwordHash
             }
         })
+
+        const payload = {sub: registredUser.id, username: registredUser.nickname}
+
+        return {
+            accesToken: await this.jwtService.signAsync(payload)
+        }
     }
 
-    async loginUser(email: string, password: string) {
+    async loginUser(email: string, password: string): Promise<{accesToken: string}> {
         const validationErrors: string[] = this.validateLoginData(email, password)
 
         if (validationErrors.length > 0) {
@@ -60,7 +68,10 @@ export class AuthService {
         }
 
         if (await this.verifyPassword(notAuthUser.password, password)) {
-            return notAuthUser
+            const payload = {sub: notAuthUser, username: notAuthUser.nickname}
+            return {
+                accesToken: await this.jwtService.signAsync(payload)
+            }
         } else {
             throw new BadRequestException("uncorrect password")
         }
