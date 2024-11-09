@@ -1,0 +1,260 @@
+openapi: 3.0.0
+info:
+  title: Chat Application API
+  description: API для мессенджера, включающего регистрацию, авторизацию, управление пользователями и диалогами.
+  version: 1.0.0
+
+paths:
+  /auth/register:
+    post:
+      summary: Регистрация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  example: "John"
+                last_name:
+                  type: string
+                  example: "Doe"
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+                nickname:
+                  type: string
+                  example: "johnny123"
+                password:
+                  type: string
+                  example: "Password@123"
+      responses:
+        '201':
+          description: Успешная регистрация
+        '400':
+          description: Ошибка валидации
+
+  /auth/login:
+    post:
+      summary: Авторизация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+                password:
+                  type: string
+                  example: "Password@123"
+      responses:
+        '200':
+          description: Успешная авторизация
+        '401':
+          description: Неверные учетные данные
+
+  /users:
+    get:
+      summary: Получить список пользователей
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+          example: "johnny"
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /users/{id}:
+    get:
+      summary: Получить данные профиля пользователя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о пользователе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Пользователь не найден
+
+    put:
+      summary: Обновить профиль пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                bio:
+                  type: string
+                avatar:
+                  type: string
+      responses:
+        '200':
+          description: Профиль обновлен
+        '404':
+          description: Пользователь не найден
+
+  /dialogs:
+    get:
+      summary: Получить список диалогов пользователя
+      responses:
+        '200':
+          description: Список диалогов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dialog'
+
+    post:
+      summary: Создать новый диалог
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participants:
+                  type: array
+                  items:
+                    type: string
+                is_group:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: Диалог создан
+
+  /dialogs/{id}:
+    get:
+      summary: Получить сообщения диалога
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Сообщения диалога
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Message'
+        '404':
+          description: Диалог не найден
+
+  /dialogs/{id}/messages:
+    post:
+      summary: Отправить сообщение в диалог
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message_text:
+                  type: string
+                  example: "Hello, how are you?"
+      responses:
+        '201':
+          description: Сообщение отправлено
+        '404':
+          description: Диалог не найден
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        nickname:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Dialog:
+      type: object
+      properties:
+        id:
+          type: string
+        created_by:
+          type: string
+        is_group:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        dialog_id:
+          type: string
+        sender_id:
+          type: string
+        message_text:
+          type: string
+        sent_at:
+          type: string
+          format: date-time

@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable } from "@nestjs/comm
 import { Prisma, User } from "@prisma/client";
 import * as argon2 from 'argon2'
 import { NonValidatedUser } from "src/types/NotValidatedUser";
-import { PrismaService } from "./prisma.service";
+import { PrismaService } from "../../services/prisma.service";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
@@ -13,7 +13,7 @@ export class AuthService {
     ) {}
 
     async registerUser(first_name: string, last_name: string, email: string, nickname: string, password: string): Promise<{accesToken: string}> {
-        if (! await this.isUniqueData(email, nickname)) {
+        if (! await this.prismaService.isUniqueUser(email, nickname)) {
             throw new BadRequestException("user with this email or nickname already exist")
         }
         
@@ -131,14 +131,5 @@ export class AuthService {
         return errors
     }
 
-    private async isUniqueData(email: string, nickname: string) {
-        const user = await this.prismaService.user.findFirst({
-            where: {
-                OR: [
-                    {email}, {nickname}
-                ]
-            }
-        })
-        return user === null
-    }
+    
 }
