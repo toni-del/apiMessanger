@@ -1,3 +1,6 @@
+import { UserBio } from "@prisma/client"
+import { BioFront } from "./BioFront"
+
 export type Profile = {
     id: number,
     first_name: string,
@@ -5,5 +8,5 @@ export type Profile = {
     email: string,
     nickname: string,
     avatar: string,
-    bio: string
+    bio: UserBio[]
 }

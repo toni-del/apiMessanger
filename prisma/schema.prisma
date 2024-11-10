@@ -21,13 +21,24 @@ model User {
   nickname    String     @unique
   password    String
   avatar      String?    // URL аватара, может быть null
-  bio         String?    // Описание профиля, может быть null
   created_at  DateTime   @default(now())
   updated_at  DateTime   @updatedAt
   dialogs     Dialog[]   @relation("DialogCreator")
   messages    Message[]  @relation("UserMessages")
+  bios        UserBio[]  @relation("UserBioData")
   participants DialogParticipant[]
 }
+
+model UserBio {
+  id             Int      @id @default(autoincrement())
+  user           User     @relation("UserBioData", fields: [userId], references: [id])
+  userId         Int
+  jsonKey        String   // название для JSON, например city
+  displayName    String   // название для фронтенда, например Город
+  value          String   // значение, например Москва
+  @@unique([userId, jsonKey]) // Уникальное сочетание userId и jsonKey
+}
+
 
 model Dialog {
   id          Int                 @id @default(autoincrement())

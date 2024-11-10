@@ -13,7 +13,7 @@ export class AuthService {
     ) {}
 
     async registerUser(first_name: string, last_name: string, email: string, nickname: string, password: string): Promise<{accesToken: string}> {
-        if (! await this.prismaService.isUniqueUser(email, nickname)) {
+        if (! await this.prismaService.isUniqueData(email, nickname)) {
             throw new BadRequestException("user with this email or nickname already exist")
         }
         
@@ -43,7 +43,7 @@ export class AuthService {
             }
         })
 
-        const payload = {sub: registredUser.id, username: registredUser.nickname}
+        const payload = {...registredUser}
 
         return {
             accesToken: await this.jwtService.signAsync(payload)
@@ -68,7 +68,7 @@ export class AuthService {
         }
 
         if (await this.verifyPassword(notAuthUser.password, password)) {
-            const payload = {sub: notAuthUser, username: notAuthUser.nickname}
+            const payload = {...notAuthUser}
             return {
                 accesToken: await this.jwtService.signAsync(payload)
             }

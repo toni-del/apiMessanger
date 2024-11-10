@@ -7,7 +7,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
   }
 
-  async isUniqueUser(email: string, nickname: string) {
+  async isUniqueData(email: string, nickname: string) {
     const user = await this.user.findFirst({
         where: {
             OR: [
