@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Profile } from "src/types/profile";
+import { Profile } from "src/types/Profile";
 import { PrismaService } from "../../services/prisma.service";
 import { Prisma, User, UserBio } from "@prisma/client";
 import { UpdateProfileConverted, UpdateProfileInput } from "src/types/UpdateProfileInput";
@@ -62,6 +62,19 @@ export class ProfileService {
 
         const updatedProfile: Profile = this.convertUserToProfile(updatedUser, userBios)
         return updatedProfile
+    }
+
+    async updateAvatar(userId: number, filePath: string): Promise<User> {
+        const updatedUser = this.prismaService.user.update({
+            where: {
+                id: userId
+            },
+            data: {
+                avatar: filePath
+            }
+        })
+
+        return updatedUser
     }
 
     private convertUpdateProfileInput(payload: UpdateProfileInput): Partial<UpdateProfileConverted> {
